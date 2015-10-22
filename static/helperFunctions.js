@@ -1,19 +1,17 @@
-// Helper functions to handle rendering things to the screen so you can focus on writing the JS logic. 
-// If you're interested, you can learn everything this file is doing by reading through the comments and doing some Googling. 
+// Helper functions to handle rendering things to the screen.
 
 var makeGameBoard = function(boardSize) {
   var board = [];
-  // Board is an array of arrays. console.log it to investigate it further!
   for(var i = 0; i < boardSize; i++) {
     var row = [];
     for(var j = 0; j < boardSize; j++) {
-      var telegraphBlue1 = '#48B9C4'; //these are 'hex' representations of colors. It's just a way of telling the machine exactly what shade of blue we want. 
+      var telegraphBlue1 = '#48B9C4'; //these are 'hex' representations of colors.
       var telegraphBlue2 = '#1A3D6D';
       //set an initial pattern of alternating colors on each square. 
       if ( (i + j) % 2 === 0 ) {
         var color = telegraphBlue1; 
       } else {
-        color = telegraphBlue2; //remember that if and for loops don't create their own scope, only function bodies. 
+        color = telegraphBlue2; 
       }
       //each square (position on the board) is represented by an object. 
       var square = {
@@ -26,12 +24,11 @@ var makeGameBoard = function(boardSize) {
     }
     board.push(row);
   }
-
   return board;
 };
 
-// Call this function each time you make a change and want that change to appear on the screen. Otherwise, your "code" will know that the change happened, but the screen won't know that it's supposed to update. 
-// INTERNAL: There are more elegant ways of doing this (right now we're wiping out the existing rendered gameBoard entirely and rendering the whole new one). We could just update individual pieces, but that would require us to build out more helper functions for the students, which would decrease their feeling of ownership over the whole project. This way also explicitly calls out that updating state and updating rendering are two separate things. This also lets the student focus on what they feel comfortable with and what the goal of the course is (writing JS logic/functional programming), and really not have to think about DOM or rendering stuff much at all. 
+// Call this function each time you make a change and want that change to appear on the screen.
+// There are more elegant ways of doing this.
 var renderGameBoard = function(gameBoard) {
   $('.gameBoard').html('');
   var boardSize = gameBoard.length;
@@ -43,14 +40,11 @@ var renderGameBoard = function(gameBoard) {
   gameBoard.forEach(function(rowArr, rowIndex) {
     rowArr.forEach(function(squareObj, columnIndex) {
       // Here we are creating the HTML that will be rendered to the DOM for each square. 
-      // HTML and JS play nicely together; you can just create a string with most of the characters that you need, add in some variables dynamically, and then when you render this to the DOM, it will interpret everything to be HTML elements and display them correctly. 
-      // We're creating a <div>, which is just a default html container that we can do whatever we want with (similar to an object in JS).
-      // We can then set "properties" on this html element. In this case, we're setting style properties to tell it how it should look on the screen. 
-        // Those style properties include it's size (height and width) in pixels (px). 
-        // We're setting it's background color to be the color of that squareObj. 
-      // To keep track of which square this is (necessary for figuring out which square was clicked on later), we set a data "property" on each square as well. 
-      // Inside of each div, we can put whatever text we want! Or none at all- it doesn't care. So we put in the text from the object at that position, if one exists. 
-      // OPTIONAL: You can change what gets rendered for each square. Want to display the name differently? Feel free to modify the code below to do what you want!
+      // We're creating a <div> (similar to an object in JS).
+      // The <div> object's properties determine how it displays on the screen.
+      // Those style properties include size (height and width) in pixels (px). 
+      // We're setting its background color to be the color of that squareObj. 
+      // The "data" property is a hook for the click handler.
       if(squareObj.gamePiece && squareObj.gamePiece.imageURL) {
         var squareHtml = '<img src="' + squareObj.gamePiece.imageURL + '" class="gameSquare" style="height:' + squareSize + 'px; width:' + squareSize + 'px" data-position="[' + rowIndex + ',' + columnIndex + ']">'
       } else {
@@ -63,20 +57,19 @@ var renderGameBoard = function(gameBoard) {
       $('.gameBoard').append(squareHtml);
     });
   });
-
 }
 
-// NOTE: You have to uncomment these lines to make program invoke the clickHandler function you're building out in yourOwnGame.js. 
-// $(document).on('click', '.gameSquare', function() {
-//   clickHandler($(this).data('position'));
-// });
+// invoke the clickHandler function.
+$(document).on('click', '.gameSquare', function() {
+  clickHandler($(this).data('position'));
+});
 
-//here we're going to keep track of the count of all pieces added to our gameBoard. 
+//Keep track of the count of all pieces added to our gameBoard. 
 var totalPieceCount = {};
 
 //initialPosition should be an array with two numbers in it. 
-  // those numbers should specify the 0-indexed row and column you want this piece to start at. 
-  // example: [1,3] would put the piece on the second row (remember we're 0-indexed) in the 4th column. 
+// those numbers should specify the 0-indexed row and column you want this piece to start at. 
+// example: [1,3] would put the piece on the second row (remember we're 0-indexed) in the 4th column. 
 var makePiece = function(gameBoard, initialPosition, pieceType, playerBelongsTo) {
   // make sure this piece is counted in our totalPieceCount object. 
   if(totalPieceCount[pieceType]) {
@@ -95,7 +88,7 @@ var makePiece = function(gameBoard, initialPosition, pieceType, playerBelongsTo)
     name: pieceName,
     typeOfPiece: pieceType,
     imageURL: '',
-    playerBelongsTo: playerBelongsTo  // if you have a game with two (or more?!) players playing against each other, you'll want to specify which player this piece belongs to
+    playerBelongsTo: playerBelongsTo  // specify which player this piece belongs to
   }
 
   var row = initialPosition[0];
