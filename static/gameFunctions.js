@@ -32,7 +32,6 @@
     return {evenColors: newColorListEvens, oddColors: newColorListOdds};
   }
 
-
   function beautifyBoard (board) {
       // Take a preexisting game board and improve the colors.
       // returns nothing.
@@ -133,7 +132,7 @@
 // call functions
   window.gameBoard = makeGameBoard(8); 
   beautifyBoard(gameBoard);
-  setUpBoard(findGameSquares(flattenBoard(gameBoard)));
+  setUpBoard(findGameSquares(gameBoard));
 
   window.clickHandler = function(positionArr) {
     var row = positionArr[0];
