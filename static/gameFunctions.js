@@ -1,22 +1,21 @@
 // Helper functions to handle rendering things to the screen.
 
-var makeGameBoard = function(boardSize) {
+var makeGameBoard = function(colorL, colorD, boardSize) {
   var board = [];
   for(var i = 0; i < boardSize; i++) {
     var row = [];
     for(var j = 0; j < boardSize; j++) {
-      var telegraphBlue1 = '#48B9C4'; //these are 'hex' representations of colors.
-      var telegraphBlue2 = '#1A3D6D';
       //set an initial pattern of alternating colors on each square. 
       if ( (i + j) % 2 === 0 ) {
-        var color = telegraphBlue1; 
+        var color = colorL; 
       } else {
-        color = telegraphBlue2; 
+        color = colorD; 
       }
       //each square (position on the board) is represented by an object. 
       var square = {
         position: [i, j],
         color: color,
+        ready: false,
         gamePiece: '', // This is the property that will contain our gamePiece object if one is on that square. 
         text: ''
       };
@@ -46,7 +45,16 @@ var renderGameBoard = function(gameBoard) {
       // We're setting its background color to be the color of that squareObj. 
       // The "data" property is a hook for the click handler.
       if(squareObj.gamePiece && squareObj.gamePiece.imageURL) {
-        var squareHtml = '<img src="' + squareObj.gamePiece.imageURL + '" class="gameSquare" style="height:' + squareSize + 'px; width:' + squareSize + 'px" data-position="[' + rowIndex + ',' + columnIndex + ']">'
+        var squareHtml = '<img src="' + 
+                          squareObj.gamePiece.imageURL + 
+                          '" class="gameSquare" style="height:' + 
+                          squareSize + 
+                          'px; width:' + 
+                          squareSize + 
+                          'px" data-position="[' + 
+                          rowIndex + ',' + 
+                          columnIndex + 
+                          ']">'
       } else {
         var squareText = '';
         if(squareObj.gamePiece) {
@@ -96,74 +104,6 @@ var makePiece = function(gameBoard, initialPosition, pieceType, playerBelongsTo)
 
 
 (function() {
-
-  function alternateColors(colorL, colorD) {
-      // Take two colors (strings) and return an object
-      // The object has two properties:
-      // evenColors, an array of color strings alternating for even numbered rows
-      // oddColors, an array of color strings alternating for odd numbered rows
-      // as on a chessboard
-
-    // declare an array of the required length. (8 is hardcoded but doesn't need to be)
-    var seedList = new Array(8);
-
-    function pickColor(num) {
-        // Takes a number and returns either one color string or the other
-      if (num%2 !== 0) {
-        return colorL;
-      } else {
-        return colorD;
-      }
-    }
-
-    // create the first array of colors (evens)
-    var newColorListEvens = _.map(seedList, function(nullValue, index) {
-      return pickColor(index);
-    })
-
-    // offset pickColor by 1 to create the second arry (odds)
-    var newColorListOdds = _.map(seedList, function(nullValue, index) {
-      return pickColor(index+1);
-    })
-
-    return {evenColors: newColorListEvens, oddColors: newColorListOdds};
-  }
-
-  function beautifyBoard (board) {
-      // Take a preexisting game board and improve the colors.
-      // returns nothing.
-      // colors are hardcoded but don't need to be.
-
-    var lightColor = "LightPink";
-    var darkColor = "HotPink";
-
-    // Create the color array object using the chosen colors
-    var colorArrays = alternateColors(lightColor, darkColor);
-
-    // go through each row in the board
-    // map the even color array onto even rows
-    // and the odd color array onto odd rows
-    // updating each square object with the color in the color array.
-      _.each(board, function(row, rIndex){
-
-        if (rIndex%2 !== 0) { 
-          var colorList = colorArrays.evenColors;
-        } else {
-          var colorList = colorArrays.oddColors;
-        }
-
-        board[rIndex] = _.map(colorList, function(color, sIndex) {
-          var newSquare = {
-            position: [rIndex, sIndex],
-            color: color,
-            gamePiece: '',
-            text: ''
-          }
-          return newSquare;
-        });
-
-      });
-  }
 
   function makeManeSix(name, url, location) {
       // add a game piece to a square on the game board.
@@ -226,29 +166,75 @@ var makePiece = function(gameBoard, initialPosition, pieceType, playerBelongsTo)
       })
     }
 
+  function markOpenSquares (position) {
+    console.log("mark open squares around ", position);
+
+    function adjacentMoves(position, whoseMove) {
+      var allMoves = []
+      if(whoseMove==="player1") {
+        var mvX = position[0]+1;
+      } else if (whoseMove === "player2") {
+        var mvX = position[0]-1;
+      } else {
+        console.log("invalid player");
+      }
+      var mvY = position[1]-1;
+      allMoves.push([mvX, mvY]);
+      mvY = position[1]+1;
+      allMoves.push([mvX, mvY]);
+      return allMoves;
+    }
+
+    function findLegalMoves (allMoves) {
+      var onBoard = _.filter(allMoves, function(move) {
+        return (move[0] >= 0 && move[1] >=0 && move[0] < gameBoard.length && move[1] < gameBoard.length)
+      });
+      var validMoves = _.filter(onBoard, function(coords) {
+        return gameBoard[coords[0]][coords[1]].gamePiece === '';
+      });
+      return _.map(validMoves, function(coords) {
+        return "[" + coords[0] + "," + coords[1] + "]"
+      });
+    }
+
+    function makePositionArray(str) {
+      var noBrackets = str.replace(/([\[|\]])/g,"");
+      var pieceLoc = noBrackets.split(",");
+      pieceLoc[0] = parseInt(pieceLoc[0]);
+      pieceLoc[1] = parseInt(pieceLoc[1]);
+      return pieceLoc;
+    }
+
+    function whichPlayer(loc) {
+      return gameBoard[loc[0]][loc[1]].gamePiece.typeOfPiece;
+    }
+    var whoseMove = whichPlayer(makePositionArray(position));
+    var validMoves = findLegalMoves(adjacentMoves(makePositionArray(position), whoseMove));
+    var squares = _.each(validMoves, function(coords) {
+      $("[data-position='" + coords + "']").toggleClass("openSquare");
+      $("[data-position='" + coords + "']").on('click', function(evt) {
+        console.log(coords, makePositionArray(coords))
+      });
+    })
+
+  }
+
 $( document ).ready(function() {
-  $('.gameBoard').on('click', '.gameSquare', function(evt) {
-      console.log($(this).css('border'));
+  $('.gameBoard').on('click', 'img.gameSquare', function(evt) {
+      $(".clicked").removeClass("clicked");
+      $(".openSquare").off('click');
+      $(".openSquare").removeClass("openSquare");
       $(this).toggleClass("clicked");
+      var piecePosition = $(this).attr('data-position');
+      markOpenSquares(piecePosition);
     });
 });
-// invoke the clickHandler function.
-// $('.gameSquare').on('click', function() {
-//   console.log($(this));
-// });
-  // window.clickHandler = function(positionArr) {
-  //   // var row = positionArr[0];
-  //   // var column = positionArr[1];
-  //   // var selectedSquare = gameBoard[row][column];
-  //   // console.log('the user clicked on square:', gameBoard[row][column]);
-  //   console.log(this);
-  //   // $("#div").css("border", "1px solid green !important");
-  //   renderGameBoard(gameBoard); // this must come at the end of clickHandler
-  // };
 
-// call functions
-  window.gameBoard = makeGameBoard(8); 
-  beautifyBoard(gameBoard);
+  window.gameBoard = makeGameBoard('LightPink', 'HotPink', 8); 
   setUpBoard(findGameSquares(gameBoard));
 
 })();
+
+// $(window).bind('load', function(){
+//     console.log($('img.gameSquare'));
+// })

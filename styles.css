@@ -23,3 +23,7 @@
 .clicked {
     border: 2px inset Turquoise;
 }
+
+.openSquare {
+    border: 2px inset Red;
+}
